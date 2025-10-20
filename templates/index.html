@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Group Management System</title>
+    <style>
+        :root {
+            --bg1: #0ea5a4;
+            --bg2: #60a5fa;
+            --accent: #0ea5a4;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, var(--bg1), var(--bg2));
+        }
+
+        .wrap {
+            min-height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px
+        }
+
+        .card {
+            width: 100%;
+            max-width: 980px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 14px;
+            box-shadow: 0 12px 30px rgba(2, 6, 23, 0.2);
+            overflow: hidden;
+            display: flex;
+            gap: 0
+        }
+
+        .left {
+            flex: 1;
+            padding: 48px 36px;
+            background: linear-gradient(180deg, rgba(14, 165, 164, 0.06), transparent)
+        }
+
+        .right {
+            width: 360px;
+            background: linear-gradient(180deg, rgba(96, 165, 250, 0.04), transparent);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 36px
+        }
+
+        h1 {
+            font-size: 32px;
+            margin: 0 0 10px;
+            color: #073044
+        }
+
+        p.lead {
+            margin: 0 0 18px;
+            color: #0f172a;
+            opacity: 0.9
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 18px
+        }
+
+        .feature {
+            background: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #eef2f7;
+            font-size: 14px;
+            color: #0b1220
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--accent);
+            color: white;
+            padding: 12px 18px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 8px 20px rgba(14, 165, 164, 0.18);
+            transition: transform .18s ease, box-shadow .18s ease
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(14, 165, 164, 0.22)
+        }
+
+        .muted {
+            color: #475569;
+            font-size: 13px
+        }
+
+        /* animation states */
+        .fade-out {
+            animation: fadeScale .7s ease forwards
+        }
+
+        @keyframes fadeScale {
+            0% {
+                opacity: 1;
+                transform: scale(1)
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(.96) translateY(-8px)
+            }
+        }
+
+        /* small spinner */
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255, 255, 255, 0.35);
+            border-top-color: rgba(255, 255, 255, 0.95);
+            border-radius: 50%;
+            animation: spin .9s linear infinite
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        @media (max-width:880px) {
+            .card {
+                flex-direction: column
+            }
+
+            .right {
+                width: 100%
+            }
+        }
+    </style>
+    <script>
+        // redirect with animation: add .fade-out to .card then navigate
+        function goLogin(fromAuto = false) {
+            const card = document.querySelector('.card');
+            if (!card) return window.location.href = '/login';
+            // prevent double navigation
+            if (card.dataset.redirecting === '1') return;
+            card.dataset.redirecting = '1';
+            // if called by button, show spinner inside button
+            const btn = document.querySelector('.btn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner" aria-hidden="true"></span> Redirecting...';
+            }
+            card.classList.add('fade-out');
+            setTimeout(() => { window.location.href = '/login'; }, 700);
+        }
+        // auto-redirect after a short delay (user can click to go immediately)
+        window.addEventListener('DOMContentLoaded', () => {
+            // start subtle pulse on button
+            const b = document.querySelector('.btn'); if (b) b.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.03)' }, { transform: 'scale(1)' }], { duration: 2000, iterations: Infinity });
+            // auto redirect in 6s
+            window.autoRedirectTimer = setTimeout(() => goLogin(true), 6000);
+        });
+    </script>
+</head>
+
+<body>
+    <div class="wrap">
+        <div class="card" role="main">
+            <div class="left">
+                <h1>Welcome to Group Management System</h1>
+                <p class="lead">Manage student presentation groups easily — create groups, invite members, and let
+                    instructors control settings.</p>
+                <div class="features">
+                    <div class="feature">Easy registration & login</div>
+                    <div class="feature">Create / Join groups</div>
+                    <div class="feature">Invite & accept requests</div>
+                    <div class="feature">Admin controls & exports</div>
+                </div>
+                <p class="muted" style="margin-top:18px">You will be taken to the login page shortly. Click the button
+                    to go now.</p>
+            </div>
+            <div class="right">
+                <div style="text-align:center;">
+                    <button class="btn" onclick="goLogin(false)">Login to your account</button>
+                    <div style="margin-top:14px;color:#334155;font-size:13px">Or <a href="/register">create an
+                            account</a></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Incoming Requests</title>
+    <style>
+        body {
+            font-family: Arial;
+            margin: 20px;
+            background: #f7fafc
+        }
+
+        .card {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px
+        }
+
+        .btn {
+            background: #2563eb;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px;
+            text-decoration: none;
+            border: none
+        }
+
+        form {
+            display: inline
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h2>📨 Incoming Requests</h2>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div style="margin-top:12px;">
+            {% for category, msg in messages %}
+            <div style="padding:10px;border-radius:6px;margin-bottom:8px;">
+                {% if category == 'success' %}
+                <div style="background:#ecfdf5;border:1px solid #bbf7d0;color:#065f46;padding:8px;border-radius:6px;">{{
+                    msg }}</div>
+                {% else %}
+                <div style="background:#fff7ed;border:1px solid #ffedd5;color:#92400e;padding:8px;border-radius:6px;">{{
+                    msg }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        {% if incoming %}
+        <ul id="incoming_list" style="list-style:none;padding:0;margin-top:12px;">
+            {% for r in incoming %}
+            <li id="req-{{ r['id'] }}"
+                style="padding:10px;border:1px solid #eef2f7;border-radius:8px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
+                <div><strong>{{ r['reg_no'] }}</strong> — {{ r['name'] }}</div>
+                <div>
+                    <button class="btn action-accept" data-id="{{ r['id'] }}"
+                        style="background:#10b981;border:none;padding:8px 12px;border-radius:6px;color:white">Accept</button>
+                    <button class="btn action-reject" data-id="{{ r['id'] }}"
+                        style="background:#ef4444;border:none;padding:8px 12px;border-radius:6px;color:white;margin-left:8px;">Reject</button>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p style="color:#475569">No incoming requests.</p>
+        {% endif %}
+
+        <p style="margin-top:12px;"><a href="/dashboard">⬅ Back to Dashboard</a></p>
+    </div>
+</body>
+
+<script>
+    function setLoading(btn, on = true) {
+        if (on) {
+            btn.dataset.orig = btn.innerHTML;
+            btn.innerHTML = '⏳';
+            btn.disabled = true;
+            btn.style.opacity = 0.7;
+        } else {
+            btn.innerHTML = btn.dataset.orig || btn.innerHTML;
+            btn.disabled = false;
+            btn.style.opacity = 1;
+        }
+    }
+
+    async function apiPost(url) {
+        const res = await fetch(url, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        try { return await res.json(); } catch (e) { return { status: 'error', message: 'invalid_response' } }
+    }
+
+    document.querySelectorAll('.action-accept').forEach(b => {
+        b.addEventListener('click', async e => {
+            const id = b.dataset.id;
+            setLoading(b, true);
+            const result = await apiPost('/api/accept_request/' + id);
+            if (result.status === 'ok') {
+                const el = document.getElementById('req-' + id);
+                if (el) el.remove();
+            } else {
+                alert(result.message || 'Error');
+                setLoading(b, false);
+            }
+        });
+    });
+
+    document.querySelectorAll('.action-reject').forEach(b => {
+        b.addEventListener('click', async e => {
+            const id = b.dataset.id;
+            setLoading(b, true);
+            const result = await apiPost('/api/reject_request/' + id);
+            if (result.status === 'ok') {
+                const el = document.getElementById('req-' + id);
+                if (el) el.remove();
+            } else {
+                alert(result.message || 'Error');
+                setLoading(b, false);
+            }
+        });
+    });
+</script>
+
+</html>

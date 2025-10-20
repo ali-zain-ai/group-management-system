@@ -1,0 +1,241 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>{{ group.name if group else 'Group' }}</title>
+    <link rel="stylesheet" href="/static/tailwind.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+            background: #f8fafc
+        }
+    </style>
+</head>
+
+<body class="py-10">
+    <div class="max-w-4xl mx-auto px-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="mb-6">
+            {% for category, msg in messages %}
+            <div
+                class="rounded-lg px-4 py-3 mb-2 shadow-sm text-sm {{ 'bg-green-50 text-green-800 border border-green-100' if category=='success' else 'bg-yellow-50 text-yellow-800 border border-yellow-100' }}">
+                {{ msg }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <div class="bg-white rounded-2xl shadow-md overflow-hidden">
+            <div class="p-6 border-b">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <h1 class="text-3xl font-semibold text-slate-900">{{ group.name }}</h1>
+                        <p class="text-sm text-slate-500 mt-1">{{ group.purpose }}</p>
+                        <p class="text-sm text-slate-500 mt-1">Leader:
+                            {% set leader = None %}
+                            {% for m in members %}
+                            {% if m.id == group['leader_id'] %}
+                            {% set leader = m %}
+                            {% endif %}
+                            {% endfor %}
+                            {{ leader.name if leader else 'N/A' }} ({{ leader.reg_no if leader else '' }})
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <a href="/dashboard"
+                            class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 text-slate-700 hover:bg-gray-200">Back</a>
+                        {% if user.get('role') == 'admin' or user.get('id') == group['leader_id'] %}
+                        <a href="/group/{{ group.id }}/edit"
+                            class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 text-white shadow hover:bg-indigo-700">Edit</a>
+                        <form method="post" action="/group/{{ group.id }}/delete" style="display:inline"
+                            onsubmit="return confirm('Delete this group? This cannot be undone.')">
+                            <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+                            <button
+                                class="ml-2 px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">Delete</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <section class="mb-6">
+                    <h2 class="text-lg font-medium text-slate-800 mb-4">Members</h2>
+                    <div class="border rounded-lg overflow-hidden">
+                        <table class="w-full text-sm">
+                            <thead class="bg-slate-50 text-slate-600">
+                                <tr>
+                                    <th class="text-left px-4 py-3">Reg No</th>
+                                    <th class="text-left px-4 py-3">Name</th>
+                                    <th class="text-center px-4 py-3">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for m in members %}
+                                <tr class="border-t last:border-b">
+                                    <td class="px-4 py-4">{{ m.reg_no }}</td>
+                                    <td class="px-4 py-4">{{ m.name }}</td>
+                                    <td class="px-4 py-4 text-center">
+                                        {% if user.get('role') == 'admin' or user.get('id') == group['leader_id'] %}
+                                        <form method="post" action="/group/{{ group.id }}/remove_member/{{ m.id }}"
+                                            style="display:inline">
+                                            <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+                                            <button
+                                                class="inline-flex items-center gap-2 px-3 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700"
+                                                onclick="return confirm('Remove this member?')">Remove</button>
+                                        </form>
+                                        {% else %}
+                                        —
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="3" class="px-4 py-6 text-center text-slate-500">No members yet.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-md font-medium text-slate-800 mb-2">Add member (by Reg No)</h3>
+                        {% if user.get('role') == 'admin' or user.get('id') == group['leader_id'] %}
+                        <form method="post" action="/group/{{ group.id }}/add_member" class="flex gap-3">
+                            <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+                            <input name="reg_no" placeholder="e.g. SU72-BSAIM-F24-010"
+                                class="flex-1 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                                required>
+                            <button class="px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700">Add</button>
+                        </form>
+                        {% else %}
+                        <p class="text-sm text-slate-500">Only the group leader or an admin can add members.</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <h3 class="text-md font-medium text-slate-800 mb-2">Invite student</h3>
+                        <p class="text-sm text-slate-500 mb-3">Send a join request to a student so they can accept and
+                            join this group.</p>
+                        <div class="flex gap-3 items-center">
+                            <div style="position:relative;flex:1;">
+                                <input id="invite_reg" placeholder="Search name or reg"
+                                    class="px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-200 w-full">
+                                <div id="invite_results"
+                                    style="position:absolute;left:0;right:0;top:100%;background:white;border:1px solid #e5e7eb;border-radius:6px;z-index:50;display:none;max-height:200px;overflow:auto;">
+                                </div>
+                            </div>
+                            <button id="invite_btn"
+                                class="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700">Send
+                                Invite</button>
+                        </div>
+                        <p id="invite_msg" class="mt-3 text-sm text-red-600"></p>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // search and invite by name or reg
+        const inviteInput = document.getElementById('invite_reg');
+        const inviteBtn = document.getElementById('invite_btn');
+        const resultsBox = document.getElementById('invite_results');
+        const inviteMsg = document.getElementById('invite_msg');
+        const csrfToken = '{{ session.csrf_token }}';
+        let debounceTimer = null;
+        let selectedIndex = -1;
+
+        inviteInput && inviteInput.addEventListener('input', () => {
+            const q = inviteInput.value.trim();
+            inviteMsg.textContent = '';
+            if (debounceTimer) clearTimeout(debounceTimer);
+            if (!q) { resultsBox.style.display = 'none'; resultsBox.innerHTML = ''; return; }
+            debounceTimer = setTimeout(async () => {
+                try {
+                    const res = await fetch('/api/find_students?q=' + encodeURIComponent(q));
+                    const body = await res.json();
+                    const items = body.results || [];
+                    if (items.length === 0) {
+                        resultsBox.innerHTML = '<div style="padding:8px;color:#6b7280">No matches</div>';
+                    } else {
+                        resultsBox.innerHTML = items.map((it, idx) => `<div data-id="${it.id}" data-idx="${idx}" class="invite-row" style="padding:8px;border-bottom:1px solid #f1f5f9;cursor:pointer">${it.name} — <span style="color:#6b7280">${it.reg_no}</span></div>`).join('');
+                        // attach click handlers
+                        resultsBox.querySelectorAll('div[data-id]').forEach(d => d.addEventListener('click', async (e) => {
+                            const id = d.dataset.id;
+                            inviteInput.value = d.textContent.trim();
+                            resultsBox.style.display = 'none';
+                            // send invite immediately
+                            await sendInvite(id);
+                        }));
+                        // reset keyboard index
+                        selectedIndex = -1;
+                        updateHighlight();
+                    }
+                    resultsBox.style.display = 'block';
+                } catch (err) {
+                    resultsBox.innerHTML = '<div style="padding:8px;color:#dc2626">Search error</div>';
+                    resultsBox.style.display = 'block';
+                }
+            }, 300);
+        });
+
+        async function sendInvite(id) {
+            inviteBtn.disabled = true; inviteBtn.textContent = 'Sending...'; inviteMsg.textContent = '';
+            try {
+                const res = await fetch('/api/send_request/' + id, { method: 'POST', headers: { 'X-CSRF-Token': csrfToken, 'X-Requested-With': 'XMLHttpRequest' } });
+                const body = await res.json();
+                if (body.status === 'ok') { inviteMsg.style.color = '#16a34a'; inviteMsg.textContent = 'Request sent ✓'; inviteBtn.textContent = 'Sent'; }
+                else { inviteMsg.style.color = '#dc2626'; inviteMsg.textContent = body.message || 'Error sending request'; inviteBtn.disabled = false; inviteBtn.textContent = 'Send Invite'; }
+            } catch (err) { inviteMsg.style.color = '#dc2626'; inviteMsg.textContent = 'Network error'; inviteBtn.disabled = false; inviteBtn.textContent = 'Send Invite'; }
+        }
+
+        function updateHighlight() {
+            const rows = resultsBox.querySelectorAll('.invite-row');
+            rows.forEach(r => r.style.background = 'white');
+            if (selectedIndex >= 0 && rows[selectedIndex]) {
+                rows[selectedIndex].style.background = '#eef2ff';
+                rows[selectedIndex].scrollIntoView({ block: 'nearest' });
+            }
+        }
+
+        inviteInput && inviteInput.addEventListener('keydown', (e) => {
+            const rows = resultsBox.querySelectorAll('.invite-row');
+            if (!rows || rows.length === 0) return;
+            if (e.key === 'ArrowDown') {
+                e.preventDefault(); selectedIndex = Math.min(selectedIndex + 1, rows.length - 1); updateHighlight();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault(); selectedIndex = Math.max(selectedIndex - 1, 0); updateHighlight();
+            } else if (e.key === 'Enter') {
+                e.preventDefault(); if (selectedIndex >= 0 && rows[selectedIndex]) { rows[selectedIndex].click(); }
+            } else if (e.key === 'Escape') {
+                resultsBox.style.display = 'none';
+            }
+        });
+
+        inviteBtn && inviteBtn.addEventListener('click', async () => {
+            // if input matches an exact reg or name, try to lookup first matching student
+            const q = inviteInput.value.trim();
+            if (!q) { inviteMsg.textContent = 'Enter a name or registration number.'; return; }
+            // try search
+            try {
+                const res = await fetch('/api/find_students?q=' + encodeURIComponent(q));
+                const body = await res.json();
+                if (body.results && body.results.length > 0) {
+                    await sendInvite(body.results[0].id);
+                } else {
+                    inviteMsg.style.color = '#dc2626'; inviteMsg.textContent = 'Student not found.';
+                }
+            } catch (err) { inviteMsg.style.color = '#dc2626'; inviteMsg.textContent = 'Network error'; }
+        });
+    </script>
+</body>
+
+</html>

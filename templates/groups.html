@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Groups</title>
+</head>
+
+<body>
+    <h1>All Groups</h1>
+    <a href="/create_group">+ Create New Group</a>
+    <ul>
+        {% for group in groups %}
+        <li>
+            <b>{{ group['name'] }}</b> — {{ group['purpose'] }}
+            <a href="/join_group/{{ group['id'] }}">Join</a>
+            <a href="/leave_group/{{ group['id'] }}">Leave</a>
+        </li>
+        {% endfor %}
+    </ul>
+</body>
+
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+
+    <div class="flex items-center justify-center h-screen bg-gray-100">
+        <h1 class="text-2xl font-bold text-gray-800">
+            Student Group Management System
+        </h1>
+    </div>
+
+
+
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f7fafc;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 28px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 8px;
+            border: 1px solid #e6e6e6;
+        }
+
+        .button {
+            background: #2563eb;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container" style="font-family: 'Segoe UI', Roboto, Arial, sans-serif;">
+        <header style="display:flex;justify-content:space-between;align-items:center;">
+            <h1 style="margin:0;font-size:28px;">Student Dashboard</h1>
+            <div>
+                <a href="/logout" style="margin-right:12px;">Logout</a>
+                {% if user.get('role') == 'admin' %}
+                <a href="{{ url_for('admin_dashboard_panel') }}" class="button">Admin Panel</a>
+                {% endif %}
+            </div>
+        </header>
+
+        <!-- flash messages intentionally hidden on dashboard -->
+
+        <section style="margin-top:18px;">
+            <h2>👋 Welcome, {{ user['name'] }}</h2>
+            <p><strong>Reg No:</strong> {{ user['reg_no'] }}</p>
+            <p><strong>Role:</strong> {{ user['role'] }}</p>
+        </section>
+
+        {% if group %}
+        <section style="background:#f0fff4;border:1px solid #d1fae5;padding:12px;border-radius:6px;margin-top:12px;">
+            <h3>📁 Your Group</h3>
+            <p><strong>Group Name:</strong> {{ group['name'] }}</p>
+            <p><strong>Purpose:</strong> {{ group['purpose'] }}</p>
+            <div style="margin-top:8px;">
+                {% if user.get('role') == 'admin' or group['leader_id'] == user['id'] %}
+                <a href="{{ url_for('edit_group', group_id=group['id']) }}" class="button">Edit Group</a>
+                <form method="POST" action="{{ url_for('delete_group', group_id=group['id']) }}"
+                    style="display:inline-block;margin-left:8px;">
+                    <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+                    <button type="submit" class="button" style="background:#ef4444;">Delete</button>
+                </form>
+                {% endif %}
+            </div>
+        </section>
+        {% else %}
+        <section style="background:#fff7ed;border:1px solid #ffedd5;padding:12px;border-radius:6px;margin-top:12px;">
+            <h3>🚫 You are not in any group</h3>
+            <p>Send a request to another student to form or join a group.</p>
+        </section>
+        {% endif %}
+
+        <!-- My Created Groups -->
+        <section style="margin-top:20px;">
+            <h3>🏗️ My Created Groups</h3>
+            {% if created_groups and created_groups|length > 0 %}
+            <div style="display:grid;grid-template-columns:1fr;gap:10px;margin-top:10px;">
+                {% for g in created_groups %}
+                <div
+                    style="border:1px solid #e6eef6;padding:12px;border-radius:8px;background:#ffffff;display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <div style="font-weight:600;">{{ g['name'] }}</div>
+                        <div style="color:#6b7280;font-size:13px;">Created: {{ g['created_at'] }}</div>
+                        <div style="color:#374151;font-size:14px;margin-top:6px;">Members: {{ g['member_count'] }}</div>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <a href="{{ url_for('group_detail', group_id=g['id']) }}" class="button"
+                            style="background:#6b7280;">View</a>
+                        {% if user.get('role') == 'admin' or g['leader_id'] == user['id'] %}
+                        <a href="{{ url_for('edit_group', group_id=g['id']) }}" class="button">Edit</a>
+                        <form method="POST" action="{{ url_for('delete_group', group_id=g['id']) }}"
+                            style="display:inline-block;margin:0;">
+                            <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+                            <button type="submit" class="button" style="background:#ef4444;">Delete</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p style="color:#6b7280;margin-top:8px;">You haven't created any groups yet.</p>
+            {% endif %}
+        </section>
+
+        <!-- Joined Groups -->
+        <section style="margin-top:20px;">
+            <h3>🤝 Joined Groups</h3>
+            {% if joined_groups and joined_groups|length > 0 %}
+            <div style="display:grid;grid-template-columns:1fr;gap:10px;margin-top:10px;">
+                {% for g in joined_groups %}
+                <div
+                    style="border:1px solid #eef6f1;padding:12px;border-radius:8px;background:#ffffff;display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <div style="font-weight:600;">{{ g['name'] }}</div>
+                        <div style="color:#6b7280;font-size:13px;">Created: {{ g['created_at'] }}</div>
+                        <div style="color:#374151;font-size:14px;margin-top:6px;">Members: {{ g['member_count'] }}</div>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <a href="{{ url_for('group_detail', group_id=g['id']) }}" class="button">View</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p style="color:#6b7280;margin-top:8px;">You have not joined any groups (other than ones you created).</p>
+            {% endif %}
+        </section>
+
+        <section style="margin-top:18px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <h3>🧑‍🤝‍🧑 Students Without a Group</h3>
+                <div>
+                    <a href="/create_group" class="button" style="background:#10b981;">+ Create Group</a>
+                </div>
+            </div>
+
+            {% if ungrouped_students %}
+            <table style="margin-top:12px;border:1px solid #e6e9ef;border-radius:6px;overflow:hidden;">
+                <thead style="background:#f8fafc;color:#0f172a;font-weight:600;">
+                    <tr>
+                        <th style="padding:10px 12px;text-align:left;">Reg No</th>
+                        <th style="padding:10px 12px;text-align:left;">Name</th>
+                        <th style="padding:10px 12px;text-align:center;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in ungrouped_students %}
+                    <tr style="border-top:1px solid #eef2f7;">
+                        <td style="padding:10px 12px;">{{ s['reg_no'] }}</td>
+                        <td style="padding:10px 12px;">{{ s['name'] }}</td>
+                        <td style="padding:10px 12px;text-align:center;">
+                            <button type="button" class="button ajax-send" data-id="{{ s['id'] }}"
+                                style="background:#2563eb;padding:8px 12px;border-radius:6px;border:none;">Send
+                                Request</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>All students are already in groups!</p>
+            {% endif %}
+        </section>
+
+        <!-- Incoming Requests -->
+        <section style="margin-top:18px;">
+            <h3>📨 Incoming Requests</h3>
+            {% set incoming = [] %}
+            {% for r in [] %}{% endfor %}
+            <!-- Inline link to view all -->
+            <p><a href="{{ url_for('requests_view') }}">View all incoming requests</a></p>
+        </section>
+
+    </div>
+
+</body>
+
+<script>
+    function setBtnLoading(btn, on = true) {
+        if (on) {
+            btn.dataset.orig = btn.innerHTML;
+            btn.innerHTML = 'Sending...';
+            btn.disabled = true;
+            btn.style.opacity = 0.7;
+        } else {
+            btn.innerHTML = btn.dataset.orig || btn.innerHTML;
+            btn.disabled = false;
+            btn.style.opacity = 1;
+        }
+    }
+
+    async function postJSON(url) {
+        const res = await fetch(url, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        try { return await res.json(); } catch (e) { return { status: 'error', message: 'invalid_response' } }
+    }
+
+    document.querySelectorAll('.ajax-send').forEach(btn => {
+        btn.addEventListener('click', async e => {
+            const id = btn.dataset.id;
+            setBtnLoading(btn, true);
+            const result = await postJSON('/api/send_request/' + id);
+            if (result.status === 'ok') {
+                // remove the row containing this button
+                const row = btn.closest('tr'); if (row) row.remove();
+            } else {
+                alert(result.message || 'Error sending request');
+                setBtnLoading(btn, false);
+            }
+        });
+    });
+</script>
+
+</html>
