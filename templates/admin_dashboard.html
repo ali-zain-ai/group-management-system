@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f7f8fa;
+            color: #333;
+        }
+
+        header {
+            background: #007bff;
+            color: white;
+            padding: 15px 30px;
+            text-align: center;
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        main {
+            padding: 20px 40px;
+        }
+
+        section {
+            margin-bottom: 40px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h3 {
+            color: #007bff;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #e9ecef;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            text-decoration: none;
+            background: #007bff;
+            color: white;
+            border-radius: 4px;
+        }
+
+        .btn:hover {
+            background: #0056b3;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #b52b38;
+        }
+
+        .save-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .save-btn:hover {
+            background-color: #218838;
+        }
+
+        footer {
+            text-align: center;
+            padding: 15px;
+            background: #f1f1f1;
+            color: #777;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>🧑‍💻 Admin Dashboard</h1>
+        <p>Welcome, {{ user.name }} ({{ user.role }})</p>
+    </header>
+
+    <main>
+        <!-- SETTINGS -->
+        <section>
+            <h3>⚙️ System Settings</h3>
+            <form action="/admin/update_settings" method="post">
+                <label><strong>Allow Group Creation:</strong></label>
+                <input type="checkbox" name="allow_group_creation" value="1" {% if settings.allow_group_creation
+                    %}checked{% endif %}>
+                <br><br>
+
+                <label><strong>Max Members Per Group:</strong></label>
+                <input type="number" name="max_group_members" value="{{ settings.max_group_members }}" min="1" max="10">
+                <br><br>
+
+                <button type="submit" class="save-btn">💾 Save Settings</button>
+            </form>
+        </section>
+
+        <!-- GROUPS -->
+        <section>
+            <h3>👥 All Groups</h3>
+            {% if groups %}
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Purpose</th>
+                    <th>Leader ID</th>
+                    <th>Action</th>
+                </tr>
+                {% for g in groups %}
+                <tr>
+                    <td>{{ g[0] }}</td>
+                    <td>{{ g[1] }}</td>
+                    <td>{{ g[2] }}</td>
+                    <td>{{ g[3] }}</td>
+                    <td><a href="/admin/delete_group/{{ g[0] }}" class="btn btn-danger">🗑 Delete</a></td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            <p>No groups found.</p>
+            {% endif %}
+        </section>
+
+        <!-- STUDENTS -->
+        <section>
+            <h3>🎓 All Students</h3>
+            {% if students %}
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>Reg No</th>
+                    <th>Name</th>
+                    <th>Role</th>
+                </tr>
+                {% for s in students %}
+                <tr>
+                    <td>{{ s[0] }}</td>
+                    <td>{{ s[1] }}</td>
+                    <td>{{ s[2] }}</td>
+                    <td>{{ s[4] }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            <p>No students registered yet.</p>
+            {% endif %}
+        </section>
+
+        <a href="/dashboard" class="btn">⬅ Back to Dashboard</a>
+        <a href="/logout" class="btn btn-danger">Logout</a>
+    </main>
+
+    <footer>
+        <p>© 2025 Student Group Management System | Admin Panel</p>
+    </footer>
+</body>
+
+</html>
